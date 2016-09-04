@@ -80,7 +80,10 @@ struct FocusMap
 	{
 		//apply gaussien blurring
 		std::vector<Pixel> blurred(width * height);
-		std::vector<uint32_t> gaussianFilter = { 1, 2, 1, 2, 4, 2, 1, 2, 1 };
+		std::vector<uint32_t> gaussianFilter = {
+			1, 2, 1,
+			2, 4, 2,
+			1, 2, 1 };
 		uint32_t total = std::accumulate(gaussianFilter.begin(), gaussianFilter.end(), 0);
 		int filterSize = 3;
 		for (int y = 0; y < height; ++y)
@@ -160,8 +163,24 @@ struct FocusStackCtx
 
 	void createDepthOfField(int32_t* dest)
 	{
-		auto focusMap = focus.back().toImage();
-		std::memcpy(dest, &focusMap.front(), size());
+		int diff = (255 - 64) * 2 / focus.size();
+		for (int i = 0; i < width * height; ++i)
+		{
+			uint32_t totalFocus = 0;
+			uint32_t dist = 0;
+			uint32_t bestFocus = focus[0].map[i];
+			for (unsigned j = 0; j < focus.size(); ++j)
+			{
+				if (bestFocus < focus[j].map[i])
+				{
+					dist = diff * j;
+					bestFocus = focus[j].map[i];
+				}
+			}
+			auto red = (dist < (255 - 64)) ? (255 - dist) : 64;
+			auto blue = (dist >= (255 - 64)) ? (dist - 128) : 64;
+			dest[i] = Pixel(red, 0, blue).argb();
+		}
 	}
 
 	void createInFocusImg(int32_t* dest)
