@@ -26,6 +26,7 @@ namespace WindowsFormsApplication1
 
             bottomPanel.AutoSize = true;
             bottomPanel.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            bottomPanel.FlowDirection = FlowDirection.TopDown;
             bottomPanel.Dock = DockStyle.Right;
 
             autoscrollPanel.AutoScroll = true;
@@ -66,7 +67,7 @@ namespace WindowsFormsApplication1
             var images = new List<FocusStackExample.ByteImage>();
             Func<PictureBox, PictureBox> setSmallPicBox = pb => {
                     pb.SizeMode = PictureBoxSizeMode.StretchImage;
-                pb.Size = new Size(100, 100);
+                pb.Size = new Size(150, 150);
                 return pb; };
             foreach (var f in files)
             {
@@ -83,23 +84,23 @@ namespace WindowsFormsApplication1
             }
 
             bottomPanel.Controls.Clear();
-            Func<PictureBox, PictureBox> left = pb => {
-                pb.SizeMode = PictureBoxSizeMode.StretchImage;
-                pb.Size = new Size(500, 500);
-                pb.Anchor = AnchorStyles.Right;
+            Panel p1 = new Panel();
+            p1.AutoScroll = true;
+            p1.Size = new Size(550, 550);
+            Panel p2 = new Panel();
+            p2.AutoScroll = true;
+            p2.Size = new Size(550, 550);
+            bottomPanel.Controls.Add(p1);
+            bottomPanel.Controls.Add(p2);
+            Func<PictureBox, PictureBox> bigImage = pb => {
+                pb.SizeMode = PictureBoxSizeMode.AutoSize;
                 return pb; };
-            Func<PictureBox, PictureBox> right = pb => {
-                pb.SizeMode = PictureBoxSizeMode.StretchImage;
-                pb.Size = new Size(500, 500);
-                pb.Anchor = AnchorStyles.Left;
-                return pb;
-            };
             FocusStackExample.FocusStacking impl = new FocusStackExample.FocusStacking(images);
-            addPictureBox(impl.createCombinedImage(), bottomPanel, left);
-            addPictureBox(impl.createDepthMap(), bottomPanel, right);
+            addPictureBox(impl.createCombinedImage(), p1, bigImage);
+            addPictureBox(impl.createDepthMap(), p2, bigImage);
         }
 
-        private void addPictureBox(Image img, FlowLayoutPanel flowPanel, Func<PictureBox, PictureBox> setter)
+        private void addPictureBox(Image img, Panel flowPanel, Func<PictureBox, PictureBox> setter)
         {
             var pb = new PictureBox();
             pb.Image = img;
