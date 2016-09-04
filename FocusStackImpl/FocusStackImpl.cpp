@@ -6,6 +6,7 @@
 #include <vector>
 #include <numeric>
 #include <algorithm>
+#include <tuple>
 
 struct Pixel
 {
@@ -66,6 +67,42 @@ struct Pixel
 	}
 };
 
+template <
+	typename AccType,
+	typename InputType,
+	typename RetType,
+	typename FilterType,
+	typename AccFunc,
+	typename StoreFunc>
+void applyFilter(const std::vector<InputType>& image,
+				 const std::vector<FilterType>& filter,
+			     std::vector<RetType>& ret,
+				 int width,
+				 AccFunc acc,
+				 StoreFunc store)
+{
+	ret.resize(image.size());
+	int height = image.size() / width;
+	int filterSize = (int)sqrt(filter.size());
+	for (int y = 0; y < height; ++y)
+	{
+		for (int x = 0; x < width; ++x)
+		{
+			AccType accValue;
+			for (int ky = 0; ky < filterSize; ++ky)
+			{
+				if (y + ky >= height) break;
+				for (int kx = 0; kx < filterSize; ++kx)
+				{
+					if (x + kx >= width) break;
+					acc(accValue, image[(y + ky) * width + x + kx], filter[ky * filterSize + kx]);
+				}
+			}
+			ret[y * width + x] = store(accValue);
+		}
+	}
+}
+
 struct FocusMap
 {
 	std::vector<uint32_t> map;
@@ -78,55 +115,27 @@ struct FocusMap
 
 	std::vector<uint32_t> createFocusMap(const std::vector<uint32_t>& image, int width, int height)
 	{
-		//apply gaussien blurring
-		std::vector<Pixel> blurred(width * height);
+		//apply gaussian blurring
+		std::vector<Pixel> blurred;
 		std::vector<uint32_t> gaussianFilter = {
 			1, 2, 1,
 			2, 4, 2,
 			1, 2, 1 };
 		uint32_t total = std::accumulate(gaussianFilter.begin(), gaussianFilter.end(), 0);
-		int filterSize = 3;
-		for (int y = 0; y < height; ++y)
-		{
-			for (int x = 0; x < width; ++x)
-			{
-				for (int ky = 0; ky < filterSize; ++ky)
-				{
-					if (y + ky >= height) break;
-					for (int kx = 0; kx < filterSize; ++kx)
-					{
-						if (x + kx >= width) break;
-						blurred[y * width + x] += Pixel(image[(y + ky) * width + x + kx])
-							* gaussianFilter[ky * filterSize + kx];
-					}
-				}
-				blurred[y * width + x] /= total;
-			}
-		}
+		applyFilter<Pixel>(image, gaussianFilter, blurred, width,
+			[](Pixel& acc, uint32_t pixel, uint32_t weight) { acc += Pixel(pixel) * weight;  },
+			[total](Pixel val) { return val / total; });
 
 		//generate laplacian
 		std::vector<uint32_t> focusMap(width * height);
 		std::vector<int32_t> laplacianFilter = { -1, -1, -1, -1, 8, -1, -1, -1, -1 };
-		for (int y = 0; y < height; ++y)
-		{
-			for (int x = 0; x < width; ++x)
-			{
-				int red = 0, green = 0, blue = 0;
-				for (int ky = 0; ky < filterSize; ++ky)
-				{
-					if (y + ky >= height) break;
-					for (int kx = 0; kx < filterSize; ++kx)
-					{
-						if (x + kx >= width) break;
-						Pixel curr(image[(y + ky) * width + x + kx]);
-						red += curr.red * laplacianFilter[ky * filterSize + kx];
-						green += curr.green * laplacianFilter[ky * filterSize + kx];
-						blue += curr.blue * laplacianFilter[ky * filterSize + kx];
-					}
-				}
-				focusMap[y * width + x] = (uint32_t)(abs(red) + abs(green) + abs(blue));
-			}
-		}
+		applyFilter<std::tuple<int, int, int>>(blurred, laplacianFilter, focusMap, width,
+			[&](std::tuple<int, int, int>& acc, Pixel pixel, uint32_t weight) {
+				std::get<0>(acc) += pixel.red * weight;
+				std::get<1>(acc) += pixel.green * weight;
+				std::get<2>(acc) += pixel.blue * weight; },
+			[&](std::tuple<int, int, int> acc) {
+				return (uint32_t)(abs(std::get<0>(acc)) + abs(std::get<1>(acc)) + abs(std::get<2>(acc))); });
 
 		return focusMap;
 	}
