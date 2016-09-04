@@ -5,18 +5,30 @@
 // FOCUSSTACKIMPL_API functions as being imported from a DLL, whereas this DLL sees symbols
 // defined with this macro as being exported.
 #ifdef FOCUSSTACKIMPL_EXPORTS
-#define FOCUSSTACKIMPL_API __declspec(dllexport)
+#define FOCUSSTACKIMPL_API  extern "C" __declspec(dllexport)
 #else
-#define FOCUSSTACKIMPL_API __declspec(dllimport)
+#define FOCUSSTACKIMPL_API  extern "C" __declspec(dllimport)
 #endif
 
-// This class is exported from the FocusStackImpl.dll
-class FOCUSSTACKIMPL_API CFocusStackImpl {
-public:
-	CFocusStackImpl(void);
-	// TODO: add your methods here.
-};
+/*
+[DllImport("FocusStackImpl.dll", CallingConvention = CallingConvention.Cdecl)]
+public static extern IntPtr createFocusStack(int width, int height);
 
-extern FOCUSSTACKIMPL_API int nFocusStackImpl;
+[DllImport("FocusStackImpl.dll", CallingConvention = CallingConvention.Cdecl)]
+public static extern int addImage(IntPtr ctx, IntPtr img);
 
-FOCUSSTACKIMPL_API int fnFocusStackImpl(void);
+[DllImport("FocusStackImpl.dll", CallingConvention = CallingConvention.Cdecl)]
+public static extern int createDepthOfField(IntPtr ctx, IntPtr dest);
+
+[DllImport("FocusStackImpl.dll", CallingConvention = CallingConvention.Cdecl)]
+public static extern int createInFocusImg(IntPtr ctx, IntPtr dest);
+
+[DllImport("FocusStackImpl.dll", CallingConvention = CallingConvention.Cdecl)]
+public static extern int releaseFocusStack(IntPtr ctx);
+*/
+
+FOCUSSTACKIMPL_API void* createFocusStack(int width, int height);
+FOCUSSTACKIMPL_API int addImage(void* ctx, int* img);
+FOCUSSTACKIMPL_API int createDepthOfField(void* focusStack, int* dest);
+FOCUSSTACKIMPL_API int createInFocusImg(void* focusStack, int* dest);
+FOCUSSTACKIMPL_API int releaseFocusStack(void* focusStack);

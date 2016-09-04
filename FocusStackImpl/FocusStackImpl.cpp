@@ -5,44 +5,66 @@
 #include "FocusStackImpl.h"
 #include <vector>
 
+
 struct FocusStackCtx
 {
 	int width, height;
-	std::vector<std::vector<char>> images;
+	std::vector<std::vector<int>> images;
 
-	FocusStackCtx(char** imgs, int numOfImages, int imgWidth, int imgHeight)
+	FocusStackCtx(int imgWidth, int imgHeight)
 		: width(imgWidth)
 		, height(imgHeight)
 	{
-		for (int i = 0; i < numOfImages; ++i)
-		{
-			images.emplace_back(imgWidth * imgHeight * 4);
-			std::memcpy(&images.back().front(), imgs[i], images.back().size());
-		}
 	}
+
+	void addImage(int* image)
+	{
+		images.emplace_back(width * height);
+		std::memcpy(&images.back().front(), image, images.back().size() * sizeof(int));
+
+	}
+
+	void createDepthOfField(int* dest)
+	{
+		std::memcpy(dest, &images.back().front(), size());
+	}
+
+	void createInFocusImg(int* dest)
+	{
+		std::memcpy(dest, &images.front().front(), size());
+	}
+	
 
 	int size()
 	{
-		return width * height * 4;
+		return width * height * sizeof(int);
 	}
 };
 
-FOCUSSTACKIMPL_API void* createFocusStack(char** images, int numOfImages, int imgWidth, int imgHeight)
+
+FOCUSSTACKIMPL_API void* createFocusStack(int imgWidth, int imgHeight)
 {
-	return (void*)new FocusStackCtx(images, numOfImages, imgWidth, imgHeight);
+	return (void*)new FocusStackCtx(imgWidth, imgHeight);
 }
 
-FOCUSSTACKIMPL_API int createDepthOfField(void* focusStack, char* dest)
+FOCUSSTACKIMPL_API int addImage(void* focusStack, int* img)
 {
 	auto ctx = (FocusStackCtx*)focusStack;
-	std::memcpy(dest, &ctx->images.front().front(), ctx->size());
+	ctx->addImage(img);
 	return 1;
 }
 
-FOCUSSTACKIMPL_API int createInFocusImg(void* focusStack, char* dest)
+FOCUSSTACKIMPL_API int createDepthOfField(void* ctx, int* dest)
 {
-	auto ctx = (FocusStackCtx*)focusStack;
-	std::memcpy(dest, &ctx->images.front().front(), ctx->size());
+	auto focusStack = (FocusStackCtx*)ctx;
+	focusStack->createDepthOfField(dest);
+	return 1;
+}
+
+FOCUSSTACKIMPL_API int createInFocusImg(void* ctx, int* dest)
+{
+	auto focusStack = (FocusStackCtx*)ctx;
+	focusStack->createInFocusImg(dest);
 	return 1;
 }
 
