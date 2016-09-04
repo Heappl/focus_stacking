@@ -34,7 +34,7 @@ namespace WindowsFormsApplication1
             mainPanel.Controls.Add(autoscrollPanel);
             mainPanel.Controls.Add(bottomPanel);
             this.Controls.Add(mainPanel);
-
+            this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             InitializeComponent();
         }
 
@@ -63,7 +63,7 @@ namespace WindowsFormsApplication1
             if (string.IsNullOrWhiteSpace(fbd.SelectedPath)) return;
             string[] files = Directory.GetFiles(fbd.SelectedPath);
 
-            var images = new List<Image>();
+            var images = new List<FocusStackExample.ByteImage>();
             Func<PictureBox, PictureBox> setSmallPicBox = pb => {
                     pb.SizeMode = PictureBoxSizeMode.StretchImage;
                 pb.Size = new Size(100, 100);
@@ -73,7 +73,7 @@ namespace WindowsFormsApplication1
                 try
                 {
                     var image = Image.FromFile(f);
-                    images.Add(image);
+                    images.Add(new FocusStackExample.ByteImage(image));
                     addPictureBox(image, imagePanel, setSmallPicBox);
 
                 } catch
@@ -94,18 +94,9 @@ namespace WindowsFormsApplication1
                 pb.Anchor = AnchorStyles.Left;
                 return pb;
             };
-            addPictureBox(createCombinedImage(images), bottomPanel, left);
-            addPictureBox(createDepthMap(images), bottomPanel, right);
-        }
-
-        private Image createDepthMap(List<Image> images)
-        {
-            return images.First();
-        }
-
-        private Image createCombinedImage(List<Image> images)
-        {
-            return images.First();
+            FocusStackExample.FocusStacking impl = new FocusStackExample.FocusStacking(images);
+            addPictureBox(impl.createCombinedImage(), bottomPanel, left);
+            addPictureBox(impl.createDepthMap(), bottomPanel, right);
         }
 
         private void addPictureBox(Image img, FlowLayoutPanel flowPanel, Func<PictureBox, PictureBox> setter)
