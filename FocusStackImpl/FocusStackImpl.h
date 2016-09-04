@@ -10,6 +10,8 @@
 #define FOCUSSTACKIMPL_API  extern "C" __declspec(dllimport)
 #endif
 
+#include <cstdint>
+
 /*
 [DllImport("FocusStackImpl.dll", CallingConvention = CallingConvention.Cdecl)]
 public static extern IntPtr createFocusStack(int width, int height);
@@ -27,8 +29,8 @@ public static extern int createInFocusImg(IntPtr ctx, IntPtr dest);
 public static extern int releaseFocusStack(IntPtr ctx);
 */
 
-FOCUSSTACKIMPL_API void* createFocusStack(int width, int height);
-FOCUSSTACKIMPL_API int addImage(void* ctx, int* img);
-FOCUSSTACKIMPL_API int createDepthOfField(void* focusStack, int* dest);
-FOCUSSTACKIMPL_API int createInFocusImg(void* focusStack, int* dest);
-FOCUSSTACKIMPL_API int releaseFocusStack(void* focusStack);
+FOCUSSTACKIMPL_API void* createFocusStack(int32_t width, int32_t height);
+FOCUSSTACKIMPL_API int32_t addImage(void* ctx, int* img);
+FOCUSSTACKIMPL_API int32_t createDepthOfField(void* focusStack, int32_t* dest);
+FOCUSSTACKIMPL_API int32_t createInFocusImg(void* focusStack, int32_t* dest);
+FOCUSSTACKIMPL_API int32_t releaseFocusStack(void* focusStack);
